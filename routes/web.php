@@ -1,0 +1,41 @@
+<?php
+
+use App\Controllers\AuthController as Auth;
+use App\Controllers\WalletController as Wallet;
+use App\Controllers\ContactImportController as Contacts;
+
+$router->get('/login', [Auth::class, 'login']);
+$router->post('/login', [Auth::class, 'signIn']);
+$router->get('/setup', [Auth::class, 'setup']);
+$router->post('/setup', [Auth::class, 'create']);
+$router->post('/locale', [Auth::class, 'locale']);
+$router->post('/logout', [Auth::class, 'logout'], true);
+$router->get('/', [Wallet::class, 'dashboard'], true);
+$router->get('/transactions', [Wallet::class, 'transactions'], true);
+$router->get('/transactions/new', [Wallet::class, 'transactionForm'], true);
+$router->post('/transactions/new', [Wallet::class, 'transactionSave'], true);
+$router->get('/transactions/{id}/edit', [Wallet::class, 'transactionForm'], true);
+$router->post('/transactions/{id}/edit', [Wallet::class, 'transactionSave'], true);
+$router->post('/transactions/{id}/delete', [Wallet::class, 'transactionDelete'], true);
+$router->get('/debts', [Wallet::class, 'debts'], true);
+$router->get('/debts/new', [Wallet::class, 'debtForm'], true);
+$router->post('/debts/new', [Wallet::class, 'debtSave'], true);
+$router->get('/debts/{id}', [Wallet::class, 'debtDetail'], true);
+$router->get('/debts/{id}/edit', [Wallet::class, 'debtForm'], true);
+$router->post('/debts/{id}/edit', [Wallet::class, 'debtSave'], true);
+$router->post('/debts/{id}/settle', [Wallet::class, 'settle'], true);
+$router->post('/debts/{id}/delete', [Wallet::class, 'debtDelete'], true);
+$router->get('/manage/{entity}', [Wallet::class, 'manage'], true);
+$router->get('/people/import', [Contacts::class, 'index'], true);
+$router->post('/people/import/preview', [Contacts::class, 'preview'], true);
+$router->post('/people/import/save', [Contacts::class, 'commit'], true);
+$router->post('/people/import/discard', [Contacts::class, 'discard'], true);
+$router->get('/manage/{entity}/new', [Wallet::class, 'entityForm'], true);
+$router->post('/manage/{entity}/new', [Wallet::class, 'entitySave'], true);
+$router->get('/manage/{entity}/{id}/edit', [Wallet::class, 'entityForm'], true);
+$router->post('/manage/{entity}/{id}/edit', [Wallet::class, 'entitySave'], true);
+$router->post('/manage/{entity}/{id}/delete', [Wallet::class, 'entityDelete'], true);
+$router->get('/reports', [Wallet::class, 'reports'], true);
+$router->get('/export', [Wallet::class, 'export'], true);
+$router->get('/settings', [Wallet::class, 'settings'], true);
+$router->post('/settings/password', [Wallet::class, 'password'], true);

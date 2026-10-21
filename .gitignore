@@ -1,0 +1,6 @@
+/.env
+/storage/logs/*.log
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/testing/
+/storage/setup-check.html
