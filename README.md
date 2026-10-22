@@ -4,7 +4,7 @@ A single-owner finance record application for multiple businesses and personal f
 
 ## Requirements
 
-- PHP 8.2+ with PDO MySQL, mbstring, and sessions.
+- PHP 8.2+ with PDO MySQL, mbstring, GD (PNG/JPEG/WebP), and sessions.
 - MySQL 8+ or MariaDB 10.4+ with InnoDB.
 - Apache with mod_rewrite (XAMPP works), or the PHP development server.
 
@@ -58,7 +58,17 @@ Preview drafts contain only parsed names/numbers, are kept in your authenticated
 
 The header switches between **English** and **Myanmar**. Settings provides light/dark themes and compact/comfortable density. Appearance preferences are stored in the current browser; language is stored in the session. Mobile navigation is an accessible drawer, and wide tables scroll inside their panels.
 
+The logo-inspired design uses emerald actions, navy navigation and headings, mint-tinted surfaces, aligned financial figures, and compact shared controls across every page. Dark mode pairs navy surfaces with mint accents. Compact is the default for this design; an older saved density is reset once on the first visit, and you can still choose Comfortable in Settings. On phones, filters fold into a disclosure and open into a two-column grid; desktop filter fields scroll independently while Apply and Reset remain visible. Transaction, directory, unpaid-balance, and payment-history lists prioritize names, amounts, and status in screen-fitting rows. Detailed report tables and contact previews retain contained horizontal scrolling. The navigation drawer starts with links and has no repeated brand/profile header. Stylesheets and scripts have modification-based version URLs so browser caches pick up design changes.
+
 Inter and Noto Sans Myanmar are requested from Google Fonts. Offline, the system/Myanmar font fallback is used; install Noto Sans Myanmar locally if necessary.
+
+## Logo and favicon
+
+In **Settings → Logo & favicon**, choose an app logo, a browser favicon, or both, preview them, then press **Save branding**. Square PNG, JPG, and WebP images are accepted, up to 2 MB per image and 16–2048 pixels per side. Transparent PNG is suitable for logos. The app preserves aspect ratio on a transparent square canvas and stores a 256 px PNG logo and a 64 px PNG favicon. SVG and ICO uploads are not accepted; upload a PNG version instead.
+
+The logo appears in the top bar and on the login/setup screen. The favicon appears on browser tabs across the application. Use **Reset logo** or **Reset favicon** to restore either built-in asset without resetting the other. Each save/reset uses a new versioned image URL so refreshed pages load the latest image rather than an older browser-cached version.
+
+Branding images are stored in the `app_branding` database table and included in full database backups. No public upload directory is needed. Image writes require the owner session and CSRF protection, while the validated image endpoints are public so branding works before login. All selected images are validated and re-encoded before any saved image changes.
 
 ## Account and deployment
 

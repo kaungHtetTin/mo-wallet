@@ -1,5 +1,12 @@
 <?php
 return [
+    'Logo & favicon'=>'လိုဂိုနှင့် ဘရောက်ဇာအိုင်ကွန်', 'App header, login screen, and browser tab'=>'အက်ပ်ခေါင်းစီး၊ အကောင့်ဝင်မျက်နှာပြင်နှင့် ဘရောက်ဇာတက်ဘ်', 'App logo'=>'အက်ပ်လိုဂို', 'Browser favicon'=>'ဘရောက်ဇာ အိုင်ကွန်', 'Save branding'=>'လိုဂိုနှင့် အိုင်ကွန် သိမ်းရန်',
+    'Square PNG, JPG, or WebP · up to 2 MB each · 16–2048 pixels. Transparent PNG works well.'=>'စတုရန်း PNG၊ JPG သို့မဟုတ် WebP · တစ်ပုံလျှင် ၂ MB အထိ · ၁၆–၂၀၄၈ pixels။ နောက်ခံဖောက်မြင်ရသော PNG ကို သုံးနိုင်သည်။',
+    'Choose at least one image to upload.'=>'တင်ရန် ပုံအနည်းဆုံးတစ်ပုံ ရွေးပါ။', 'Choose an image smaller than 2 MB.'=>'၂ MB ထက်ငယ်သော ပုံ ရွေးပါ။', 'The image could not be uploaded. Please choose it again.'=>'ပုံကို တင်မရပါ။ ပြန်လည်ရွေးချယ်ပါ။', 'Choose a valid PNG, JPG, or WebP image.'=>'မှန်ကန်သော PNG၊ JPG သို့မဟုတ် WebP ပုံ ရွေးပါ။', 'Image dimensions must be between 16 and 2048 pixels.'=>'ပုံ၏ အကျယ်နှင့် အမြင့်သည် ၁၆ မှ ၂၀၄၈ pixels အတွင်း ဖြစ်ရမည်။',
+    'Logo and favicon settings saved.'=>'လိုဂိုနှင့် ဘရောက်ဇာအိုင်ကွန် သိမ်းပြီးပါပြီ။', 'Default branding restored.'=>'မူလလိုဂို / အိုင်ကွန်ကို ပြန်လည်သတ်မှတ်ပြီးပါပြီ။', 'Reset logo'=>'မူလလိုဂို ပြန်သုံးရန်', 'Reset favicon'=>'မူလအိုင်ကွန် ပြန်သုံးရန်', 'Restore the default app logo?'=>'မူလအက်ပ်လိုဂိုကို ပြန်သုံးမလား။', 'Restore the default browser favicon?'=>'မူလဘရောက်ဇာအိုင်ကွန်ကို ပြန်သုံးမလား။', 'Restore default branding?'=>'မူလလိုဂို / အိုင်ကွန်ကို ပြန်သုံးမလား။', 'Restore default'=>'မူလအတိုင်း ပြန်သုံးရန်',
+    'No outstanding balance'=>'ပေးရန် / ရရန် လက်ကျန်မရှိပါ',
+    'Income, expenses, and balances across your books.'=>'သင့်စာရင်းစာအုပ်များ၏ ဝင်ငွေ၊ အသုံးစရိတ်နှင့် လက်ကျန်များ။',
+    'Finance book'=>'ငွေစာရင်းစာအုပ်', 'LEDGER'=>'ငွေစာရင်း', 'DIRECTORY'=>'အခြေခံစာရင်းများ', 'Filters'=>'စစ်ထုတ်ရန်', 'Filter records'=>'စာရင်းများ စစ်ထုတ်ရန်', 'All dates'=>'ရက်စွဲအားလုံး',
     'Import contacts'=>'ဖုန်းအဆက်အသွယ်များ တင်သွင်းရန်', 'BRING YOUR PEOPLE WITH YOU'=>'သင့်အဆက်အသွယ်များကို ထည့်သွင်းပါ', 'Back to people'=>'လူပုဂ္ဂိုလ်စာရင်းသို့ ပြန်ရန်',
     'Choose contacts from your phone or upload a contact file, then review before saving.'=>'ဖုန်းမှ အဆက်အသွယ်များ ရွေးချယ်ပါ သို့မဟုတ် ဖိုင်တင်ပြီး မသိမ်းမီ ပြန်လည်စစ်ဆေးပါ။',
     'Choose from phone'=>'ဖုန်းမှ ရွေးချယ်ရန်', 'Choose phone contacts'=>'ဖုန်းအဆက်အသွယ်များ ရွေးရန်', 'Upload contact file'=>'အဆက်အသွယ်ဖိုင် တင်ရန်', 'Contact file (.vcf)'=>'အဆက်အသွယ်ဖိုင် (.vcf)', 'Preview contacts'=>'အဆက်အသွယ်များ ကြိုကြည့်ရန်',

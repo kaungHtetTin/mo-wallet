@@ -47,8 +47,11 @@ function form(string $path, array $data): array {
 try {
     $admin=DB::connection(true);
     $admin->exec("CREATE DATABASE `$testDatabase` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $migration=require BASE_PATH . '/migrations/2026_10_21_000001_wallet.php';
-    foreach ($migration['up'] as $sql) DB::connection()->exec($sql);
+    $migrationFiles=glob(BASE_PATH.'/migrations/*.php'); sort($migrationFiles);
+    foreach ($migrationFiles as $migrationFile) {
+        $migration=require $migrationFile;
+        foreach ($migration['up'] as $sql) DB::connection()->exec($sql);
+    }
     $business=F::saveEntity('businesses',['name'=>'Design Studio','kind'=>'business']);
     $business2=F::saveEntity('businesses',['name'=>'Neighborhood Store','kind'=>'business']);
     $bank=F::saveEntity('books',['name'=>'Bank','opening_balance'=>'1000000']);
@@ -114,12 +117,14 @@ try {
     for($i=0;$i<50;$i++){ $socket=@fsockopen('127.0.0.1',$port); if($socket){fclose($socket);break;} usleep(100000); }
     check(request('')['status']===302,'Dashboard requires authentication');
     check(request('export')['status']===302,'CSV export requires authentication');
+    check(request('settings/branding',[])['status']===302,'Branding changes require authentication');
     check(request('setup',[])['status']===419,'Setup enforces CSRF');
     $setup=form('setup',['name'=>'Test Owner','email'=>'owner@example.test','password'=>'Wallet-Test-2026!','password_confirmation'=>'Wallet-Test-2026!']);
     check($setup['status']===302,'First owner created');
     check((int)DB::fetchValue('SELECT COUNT(*) FROM owner_users')===1,'Exactly one owner');
     check(request('setup')['status']===302,'Setup closes after first owner');
     require __DIR__ . '/contacts.php';
+    require __DIR__ . '/branding.php';
     check(request('transactions/new',[])['status']===419,'Financial writes enforce CSRF');
     foreach(['','transactions','transactions/new','debts','debts/new',"debts/$debtId",'reports','manage/books','manage/businesses','manage/categories','manage/people','settings'] as $path){
         $response=request($path); check($response['status']===200 && !preg_match('/(?:Warning:|Fatal error|Application error)/',$response['body']),'Page renders: '.$path);

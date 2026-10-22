@@ -129,6 +129,107 @@ function assert(value,label){if(!value) throw new Error(label);}
     await page.getByRole('heading',{name:'Import contacts',exact:true}).waitFor();
     await page.goto(base+'/manage/people');
     assert(await page.getByRole('cell',{name:'Phone picker example',exact:false}).count()===0,'Discarded phone contact was saved');
+    await page.goto(base+'/settings');
+    assert(await page.getByRole('button',{name:'Save branding',exact:true}).isDisabled(),'Branding save should require a selected image');
+    const makeBrandImage=async(color,letter)=>Buffer.from(await page.evaluate(({color,letter})=>{
+        const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+        const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,128,128);ctx.fillStyle='#fff';ctx.font='bold 88px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(letter,64,68);
+        return canvas.toDataURL('image/png').split(',')[1];
+    },{color,letter}),'base64');
+    const logoPNG=await makeBrandImage('#286448','M'),faviconPNG=await makeBrandImage('#916519','K');
+    await page.getByLabel('App logo',{exact:true}).setInputFiles({name:'my-logo.png',mimeType:'image/png',buffer:logoPNG});
+    await page.getByLabel('Browser favicon',{exact:true}).setInputFiles({name:'my-favicon.png',mimeType:'image/png',buffer:faviconPNG});
+    await page.locator('[data-branding-preview="logo"][src^="data:image/png"]').waitFor();
+    await page.getByRole('button',{name:'Save branding',exact:true}).click();
+    await page.getByRole('status').filter({hasText:'Logo and favicon settings saved.'}).waitFor();
+    assert(await page.locator('[data-branding-file][aria-invalid="true"]').count()===0,'Empty preview status should not mark saved branding inputs invalid');
+    assert(await page.locator('.app-logo').isVisible(),'Saved logo missing from app header');
+    const faviconHref=await page.locator('link[rel="icon"]').getAttribute('href');
+    assert(faviconHref.includes('/branding/favicon/'),'Saved favicon URL was not applied');
+    await page.setViewportSize({width:1440,height:900});
+    await page.screenshot({path:path.join(out,'branding-desktop.png'),fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:path.join(out,'branding-mobile.png'),fullPage:true});
+    assert((await overflow()).scroll<=390,'Branding settings overflow mobile viewport');
+    await page.getByRole('button',{name:'Sign out',exact:true}).click();
+    await page.getByRole('heading',{name:'Welcome back',exact:true}).waitFor();
+    assert(await page.locator('.auth-logo').isVisible(),'Custom logo missing on login screen');
+    assert(await page.locator('link[rel="icon"]').getAttribute('href')===faviconHref,'Login favicon differs from saved favicon');
+    await page.getByLabel('Email address').fill('owner@example.test');
+    await page.getByLabel('Password',{exact:true}).fill('Wallet-New-2026!');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await page.getByRole('heading',{name:'Overview',exact:true}).waitFor();
+    await page.goto(base+'/settings');
+    await page.getByRole('button',{name:'Reset logo',exact:true}).click();
+    await page.getByRole('button',{name:'Cancel',exact:true}).click();
+    assert(await page.locator('.app-logo').isVisible(),'Cancel reset should retain custom logo');
+    await page.getByRole('button',{name:'Reset logo',exact:true}).click();
+    await page.getByRole('button',{name:'Restore default',exact:true}).click();
+    await page.getByRole('status').filter({hasText:'Default branding restored.'}).waitFor();
+    assert(await page.locator('.app-logo').count()===0,'Logo reset did not restore built-in icon');
+    assert((await page.locator('link[rel="icon"]').getAttribute('href')).includes('/branding/favicon/'),'Logo reset should preserve custom favicon');
+    await page.getByRole('button',{name:'Reset favicon',exact:true}).click();
+    await page.getByRole('button',{name:'Restore default',exact:true}).click();
+    await page.getByRole('status').filter({hasText:'Default branding restored.'}).waitFor();
+    assert((await page.locator('link[rel="icon"]').getAttribute('href')).includes('assets/favicon.svg'),'Favicon reset did not restore default');
+    // Every page shares the compact ledger system; check both layout breakpoints.
+    await page.goto(base+'/settings');
+    await page.getByLabel('Display density').selectOption('compact');
+    const reviewRoutes=[['overview',''],['transactions','transactions'],['transaction-form','transactions/new'],['balances','debts'],['balance-form','debts/new'],['balance-detail','debts/1'],['reports','reports'],['books','manage/books'],['book-form','manage/books/new'],['businesses','manage/businesses'],['business-form','manage/businesses/new'],['categories','manage/categories'],['category-form','manage/categories/new'],['people','manage/people'],['person-form','manage/people/new'],['contact-import','people/import'],['settings','settings']];
+    for (const width of [1440,390]) {
+        await page.setViewportSize({width,height:900});
+        for (const [label,route] of reviewRoutes) {
+            await page.goto(base+'/'+route);
+            await page.getByRole('heading',{level:1}).waitFor();
+            const sizes=await overflow();
+            assert(sizes.scroll<=width,`${label} overflows at ${width}px: ${sizes.scroll}`);
+            if (label==='overview' || label==='transactions') {
+                const visibleAmounts=await page.locator('.ledger-table').evaluate(table=>{
+                    const boundary=table.parentElement.getBoundingClientRect();
+                    return [...table.querySelectorAll('tbody td.number')].every(cell=>cell.getBoundingClientRect().right<=boundary.right+1);
+                });
+                assert(visibleAmounts,`${label} financial amounts extend outside the list at ${width}px`);
+            }
+            await page.screenshot({path:path.join(out,`ledger-${width}-${label}.png`),fullPage:true});
+        }
+    }
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(base+'/transactions');
+    const filterDisclosure=page.locator('[data-filter-disclosure]');
+    assert(await filterDisclosure.getAttribute('open')===null,'Mobile filters should start folded');
+    await filterDisclosure.locator('summary').click();
+    await page.getByLabel('Search',{exact:true}).fill('Shop sales');
+    await page.getByRole('button',{name:'Apply filters',exact:true}).click();
+    assert(await page.getByRole('cell',{name:'Shop sales',exact:false}).count()===1,'Mobile filter flow failed');
+    await page.screenshot({path:path.join(out,'ledger-mobile-filtered.png'),fullPage:true});
+    await page.getByRole('button',{name:'မြန်မာ',exact:true}).click();
+    await page.screenshot({path:path.join(out,'ledger-mobile-myanmar.png'),fullPage:true});
+    assert((await overflow()).scroll<=390,'Myanmar mobile ledger overflows');
+    await page.goto(base+'/settings');
+    await page.getByRole('button',{name:'အလင်း / အမှောင် ပြောင်းရန်',exact:true}).click();
+    await page.setViewportSize({width:1280,height:720});
+    await page.goto(base+'/reports');
+    await page.screenshot({path:path.join(out,'ledger-dark-myanmar-report.png'),fullPage:true});
+    assert((await overflow()).scroll<=1280,'Myanmar dark report overflows');
+    await page.setViewportSize({width:320,height:740});
+    await page.goto(base+'/transactions');
+    assert((await overflow()).scroll<=320,'Small mobile ledger overflows');
+    await page.screenshot({path:path.join(out,'ledger-320-myanmar-transactions.png'),fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(base+'/transactions?from=invalid&to=2026-01-01');
+    assert(await page.locator('[data-filter-disclosure]').getAttribute('open')!==null,'Invalid filter values should keep correction fields open');
+    await page.getByRole('button',{name:'English',exact:true}).click();
+    await page.goto(base+'/transactions?q=__no_matching_records__');
+    await page.getByText('No transactions yet',{exact:true}).waitFor();
+    await page.screenshot({path:path.join(out,'ledger-mobile-empty.png'),fullPage:true});
+    assert((await overflow()).scroll<=390,'Empty mobile ledger overflows');
+    await page.setViewportSize({width:1440,height:900});
+    await page.getByRole('button',{name:'Sign out',exact:true}).click();
+    await page.getByRole('heading',{name:'Welcome back',exact:true}).waitFor();
+    await page.screenshot({path:path.join(out,'ledger-desktop-login.png'),fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:path.join(out,'ledger-mobile-login.png'),fullPage:true});
+    assert((await overflow()).scroll<=390,'Mobile login overflows');
     assert(issues.length===0,'Browser errors: '+issues.join('; '));
     console.log('PASS: Browser flows and contacts: upload, preview, selection, duplicate skipping, language, mobile, simulated phone picker, and discard.');
 })().catch(async error=>{

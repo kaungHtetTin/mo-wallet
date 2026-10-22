@@ -12,6 +12,19 @@ function money(int|string|null $amount): string
     return number_format((int) $amount) . ' ' . t('MMK');
 }
 
+function app_logo(bool $auth=false): string
+{
+    if (\App\Services\Branding::current()['has_logo']) {
+        return '<img class="'.($auth ? 'auth-logo' : 'app-logo').'" src="'.e(\App\Services\Branding::url('logo')).'" alt="" width="'.($auth ? '48' : '32').'" height="'.($auth ? '48' : '32').'">';
+    }
+    return $auth ? '<span class="brand-mark">'.icon('books').'</span>' : icon('books');
+}
+
+function favicon_url(): string
+{
+    return \App\Services\Branding::url('favicon');
+}
+
 function input(string $key, string $default = ''): string
 {
     $value = $_POST[$key] ?? $default;
@@ -66,6 +79,8 @@ function icon(string $name): string
         'logout' => '<path d="M9 4H4v16h5m5-13 5 5-5 5M9 12h10"/>',
         'download' => '<path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/>',
         'chevron' => '<path d="m9 5 7 7-7 7"/>',
+        'edit' => '<path d="m15 4 5 5M4 20l4-1L20 7a2 2 0 0 0-4-4L4 15z"/>',
+        'trash' => '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',
     ];
     return '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($paths[$name] ?? $paths['books']) . '</svg>';
 }

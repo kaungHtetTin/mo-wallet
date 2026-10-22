@@ -3,6 +3,7 @@
 use App\Controllers\AuthController as Auth;
 use App\Controllers\WalletController as Wallet;
 use App\Controllers\ContactImportController as Contacts;
+use App\Controllers\BrandingController as Branding;
 
 $router->get('/login', [Auth::class, 'login']);
 $router->post('/login', [Auth::class, 'signIn']);
@@ -39,3 +40,6 @@ $router->get('/reports', [Wallet::class, 'reports'], true);
 $router->get('/export', [Wallet::class, 'export'], true);
 $router->get('/settings', [Wallet::class, 'settings'], true);
 $router->post('/settings/password', [Wallet::class, 'password'], true);
+$router->post('/settings/branding', [Branding::class, 'save'], true);
+$router->post('/settings/branding/reset/{kind}', [Branding::class, 'reset'], true);
+$router->get('/branding/{kind}/{version}', [Branding::class, 'image']);

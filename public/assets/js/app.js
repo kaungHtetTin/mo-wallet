@@ -3,6 +3,10 @@
     const root = document.documentElement;
     const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
     const write = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
+    if (read('mowallet.design', '') !== 'emerald-v3') {
+        write('mowallet.density', 'compact');
+        write('mowallet.design', 'emerald-v3');
+    }
     root.dataset.theme = read('mowallet.theme', 'light') === 'dark' ? 'dark' : 'light';
     if (!document.body.classList.contains('auth-body')) root.dataset.density = read('mowallet.density', 'compact') === 'comfortable' ? 'comfortable' : 'compact';
     const updateThemeButtons = () => document.querySelectorAll('[data-theme-toggle]').forEach(button => button.setAttribute('aria-pressed', String(root.dataset.theme === 'dark')));
@@ -13,6 +17,17 @@
     document.querySelectorAll('[data-density-select]').forEach(select => {
         select.value = root.dataset.density;
         select.addEventListener('change', () => { root.dataset.density = select.value; write('mowallet.density', select.value); });
+    });
+    const filterMedia = matchMedia('(max-width:760px)');
+    document.querySelectorAll('[data-filter-disclosure]').forEach(disclosure => {
+        const sync = () => {
+            disclosure.open = !filterMedia.matches || disclosure.dataset.hasErrors === 'true';
+        };
+        sync();
+        filterMedia.addEventListener('change', sync);
+        disclosure.addEventListener('toggle', () => {
+            if (!filterMedia.matches && !disclosure.open) disclosure.open = true;
+        });
     });
     const navToggle = document.querySelector('[data-nav-toggle]');
     const sidebar = document.querySelector('.sidebar');
@@ -42,10 +57,16 @@
     });
     matchMedia('(min-width:761px)').addEventListener('change', closeNav);
     const dialog = document.querySelector('#confirm-dialog'); let pendingForm;
+    const confirmTitle = document.querySelector('#confirm-title');
+    const confirmAccept = document.querySelector('[data-confirm-accept]');
+    const defaultConfirmTitle = confirmTitle?.textContent;
+    const defaultConfirmLabel = confirmAccept?.textContent;
     document.querySelectorAll('form[data-confirm]').forEach(form => form.addEventListener('submit', event => {
         if (form.dataset.confirmed === 'true') return;
         event.preventDefault(); pendingForm = form;
         document.querySelector('#confirm-message').textContent = form.dataset.confirm;
+        confirmTitle.textContent = form.dataset.confirmTitle || defaultConfirmTitle;
+        confirmAccept.textContent = form.dataset.confirmLabel || defaultConfirmLabel;
         dialog.showModal(); document.querySelector('[data-confirm-cancel]').focus();
     }));
     document.querySelector('[data-confirm-cancel]')?.addEventListener('click', () => dialog.close());
@@ -79,7 +100,9 @@
         const sync = () => filterCategories(debtForm, direction.value === 'receivable' ? 'income' : 'expense');
         direction.addEventListener('change', sync); sync();
     }
-    document.querySelectorAll('.field-error').forEach(error => error.closest('.field')?.querySelector('input,select,textarea')?.setAttribute('aria-invalid', 'true'));
+    document.querySelectorAll('.field-error').forEach(error => {
+        if (error.textContent.trim()) error.closest('.field')?.querySelector('input,select,textarea')?.setAttribute('aria-invalid', 'true');
+    });
     document.querySelector('input[aria-invalid=true],select[aria-invalid=true],textarea[aria-invalid=true]')?.focus();
     document.querySelectorAll('form').forEach(form => form.addEventListener('submit', () => {
         if (form.dataset.confirm && form.dataset.confirmed !== 'true') return;

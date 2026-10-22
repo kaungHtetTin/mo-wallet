@@ -1,6 +1,39 @@
-<?php $label = ['books'=>'Account books','businesses'=>'Businesses & personal','categories'=>'Categories','people'=>'People'][$entity]; $descriptions = ['books'=>'Separate balances for cash, banks, and mobile wallets.','businesses'=>'Keep each business and your personal finances easy to review.','categories'=>'Shared categories keep every business consistently organized.','people'=>'The people you pay, receive from, and keep track of.']; ?>
-<div class="page-heading"><div><span class="eyebrow"><?= e(t('A PLACE FOR EVERYTHING')) ?></span><h1><?= e(t($label)) ?></h1><p><?= e(t($descriptions[$entity])) ?></p></div><div class="heading-actions"><?php if ($entity==='people'): ?><a class="button" href="<?= url('people/import') ?>"><?= icon('download') ?><?= e(t('Import contacts')) ?></a><?php endif ?><a class="button primary" href="<?= url("manage/$entity/new") ?>"><?= icon('plus') ?><?= e(t(['books'=>'New account book','businesses'=>'New business / personal','categories'=>'New category','people'=>'New person'][$entity])) ?></a></div></div>
-<?php if ($entity==='books'): ?><div class="notice"><?= e(t('Book balances include opening balances and all entries dated today or earlier. Future-dated entries appear on their record date.')) ?></div><?php endif ?>
-<section class="panel ledger-panel"><div class="table-wrap"><table><thead><tr><th><?= e(t('Name / notes')) ?></th><?php if ($entity==='books'): ?><th class="number"><?= e(t('Opening balance')) ?></th><th class="number"><?= e(t('Current balance')) ?></th><?php elseif ($entity==='people'): ?><th><?= e(t('Phone')) ?></th><th class="number"><?= e(t('To receive')) ?></th><th class="number"><?= e(t('To pay')) ?></th><?php else: ?><th><?= e(t('Type')) ?></th><?php endif ?><th class="actions-col"><?= e(t('Actions')) ?></th></tr></thead><tbody>
-<?php foreach ($rows as $row): ?><tr><td><strong><?= e($row['name']) ?></strong><small class="row-note" title="<?= e($row['notes']) ?>"><?= e($row['notes'] ?? '') ?></small></td><?php if ($entity==='books'): ?><td class="number"><?= e(money($row['opening_balance'])) ?></td><td class="number amount"><?= e(money($row['balance'])) ?></td><?php elseif ($entity==='people'): ?><td><?= e($row['phone'] ?: '—') ?></td><td class="number positive"><?= e(money($summary[$row['id']]['receivable'] ?? 0)) ?></td><td class="number negative"><?= e(money($summary[$row['id']]['payable'] ?? 0)) ?></td><?php else: ?><td><?= status_badge($row['kind']) ?></td><?php endif ?><td class="actions-col"><div class="row-actions"><?php if ($entity==='people'): ?><a class="text-button" href="<?= url('debts?status=&person_id=' . $row['id']) ?>"><?= e(t('Balances')) ?></a><?php endif ?><a class="text-button" href="<?= url("manage/$entity/{$row['id']}/edit") ?>"><?= e(t('Edit')) ?></a><form method="post" action="<?= url("manage/$entity/{$row['id']}/delete") ?>" data-confirm="<?= e(t('Remove this record? Records already used in transactions or balances cannot be deleted.')) ?>"><?= csrf_field() ?><button class="text-button danger-text"><?= e(t('Delete')) ?></button></form></div></td></tr><?php endforeach ?>
-<?php if (!$rows): ?><tr><td colspan="5"><div class="empty-state"><?= icon($entity) ?><strong><?= e(t('Nothing here yet')) ?></strong><span><?= e(t('Create your first record to get started.')) ?></span></div></td></tr><?php endif ?></tbody></table></div></section>
+<?php
+$label=['books'=>'Account books','businesses'=>'Businesses & personal','categories'=>'Categories','people'=>'People'][$entity];
+$descriptions=['books'=>'Separate balances for cash, banks, and mobile wallets.','businesses'=>'Keep each business and your personal finances easy to review.','categories'=>'Shared categories keep every business consistently organized.','people'=>'The people you pay, receive from, and keep track of.'];
+?>
+<div class="page-heading"><div><h1><?= e(t($label)) ?></h1><p><?= e(t($descriptions[$entity])) ?></p></div><div class="heading-actions">
+    <?php if ($entity==='people'): ?><a class="button" href="<?= url('people/import') ?>"><?= icon('download') ?><?= e(t('Import contacts')) ?></a><?php endif ?>
+    <a class="button primary" href="<?= url("manage/$entity/new") ?>"><?= icon('plus') ?><?= e(t(['books'=>'New account book','businesses'=>'New business / personal','categories'=>'New category','people'=>'New person'][$entity])) ?></a>
+</div></div>
+<?php if ($entity==='books'): ?><p class="quiet-note"><?= icon('books') ?><?= e(t('Book balances include opening balances and all entries dated today or earlier. Future-dated entries appear on their record date.')) ?></p><?php endif ?>
+<section class="panel ledger-panel"><div class="list-summary"><span><?= count($rows) ?> <?= e(t('records')) ?></span><?php if (in_array($entity,['books','people'],true)): ?><span><?= e(t('Amounts in MMK')) ?></span><?php endif ?></div><div class="table-wrap"><table class="entity-table"><thead><tr>
+    <th><?= e(t('Name / notes')) ?></th>
+    <?php if ($entity==='books'): ?><th class="number"><?= e(t('Opening balance')) ?></th><th class="number"><?= e(t('Current balance')) ?></th>
+    <?php elseif ($entity==='people'): ?><th><?= e(t('Phone')) ?></th><th class="number"><?= e(t('To receive')) ?></th><th class="number"><?= e(t('To pay')) ?></th>
+    <?php else: ?><th><?= e(t('Type')) ?></th><?php endif ?>
+    <th class="actions-col"><?= e(t('Actions')) ?></th>
+</tr></thead><tbody>
+<?php foreach ($rows as $row): ?>
+<tr>
+    <td>
+        <?php if ($entity==='people'): ?><a class="identity-link" href="<?= url('debts?status=&person_id='.$row['id']) ?>"><strong><?= e($row['name']) ?></strong></a><?php else: ?><strong><?= e($row['name']) ?></strong><?php endif ?>
+        <small class="row-note" title="<?= e($row['notes']) ?>"><?= e($row['notes']??'') ?></small>
+        <div class="mobile-only">
+            <?php if ($entity==='books'): ?><div class="entity-money"><span><?= e(t('Current balance')) ?> <strong><?= e(money($row['balance'])) ?></strong></span></div>
+            <?php elseif ($entity==='people'): ?><span class="entry-meta"><?= e($row['phone']?:'—') ?></span><div class="entity-money"><?php if (($summary[$row['id']]['receivable']??0) || ($summary[$row['id']]['payable']??0)): ?><span class="positive"><?= e(t('To receive')) ?> <?= e(money($summary[$row['id']]['receivable']??0)) ?></span><span class="negative"><?= e(t('To pay')) ?> <?= e(money($summary[$row['id']]['payable']??0)) ?></span><?php else: ?><span class="muted"><?= e(t('No outstanding balance')) ?></span><?php endif ?></div>
+            <?php else: ?><?= status_badge($row['kind']) ?><?php endif ?>
+        </div>
+    </td>
+    <?php if ($entity==='books'): ?><td class="number"><?= e(money($row['opening_balance'])) ?></td><td class="number amount"><?= e(money($row['balance'])) ?></td>
+    <?php elseif ($entity==='people'): ?><td><?= e($row['phone']?:'—') ?></td><td class="number positive"><?= e(money($summary[$row['id']]['receivable']??0)) ?></td><td class="number negative"><?= e(money($summary[$row['id']]['payable']??0)) ?></td>
+    <?php else: ?><td><?= status_badge($row['kind']) ?></td><?php endif ?>
+    <td class="actions-col"><div class="row-actions">
+        <?php if ($entity==='people'): ?><a class="text-button person-balances" href="<?= url('debts?status=&person_id='.$row['id']) ?>"><?= e(t('Balances')) ?></a><?php endif ?>
+        <a class="text-button" href="<?= url("manage/$entity/{$row['id']}/edit") ?>" aria-label="<?= e(t('Edit')) ?>" title="<?= e(t('Edit')) ?>"><span class="row-action-icon"><?= icon('edit') ?></span><span class="row-action-label"><?= e(t('Edit')) ?></span></a>
+        <form method="post" action="<?= url("manage/$entity/{$row['id']}/delete") ?>" data-confirm="<?= e(t('Remove this record? Records already used in transactions or balances cannot be deleted.')) ?>"><?= csrf_field() ?><button class="text-button danger-text" aria-label="<?= e(t('Delete')) ?>" title="<?= e(t('Delete')) ?>"><span class="row-action-icon"><?= icon('trash') ?></span><span class="row-action-label"><?= e(t('Delete')) ?></span></button></form>
+    </div></td>
+</tr>
+<?php endforeach ?>
+<?php if (!$rows): ?><tr><td colspan="5"><div class="empty-state"><?= icon($entity) ?><strong><?= e(t('Nothing here yet')) ?></strong><span><?= e(t('Create your first record to get started.')) ?></span></div></td></tr><?php endif ?>
+</tbody></table></div></section>
