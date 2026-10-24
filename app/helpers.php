@@ -9,7 +9,7 @@ function t(string $key): string
 
 function money(int|string|null $amount): string
 {
-    return number_format((int) $amount) . ' ' . t('MMK');
+    return \App\Services\Money::format($amount) . ' ' . t('MMK');
 }
 
 function app_logo(bool $auth=false): string
@@ -87,9 +87,9 @@ function icon(string $name): string
 
 function debt_status(array $row): string
 {
-    if ((int) $row['remaining'] === 0) return 'Settled';
+    if (\App\Services\Money::compare($row['remaining'], '0') === 0) return 'Settled';
     if ($row['due_date'] && $row['due_date'] < date('Y-m-d')) return 'Overdue';
-    return (int) $row['paid'] > 0 ? 'Partial' : 'Unpaid';
+    return \App\Services\Money::compare($row['paid'], '0') > 0 ? 'Partial' : 'Unpaid';
 }
 
 function status_badge(string $status): string

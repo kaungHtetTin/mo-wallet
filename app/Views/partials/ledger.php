@@ -8,7 +8,7 @@
     <td><?= e($entry['category_name'] ?? '—') ?><?php if ($entry['debt_id']): ?><small><?= e(t('Balance payment')) ?></small><?php endif ?></td>
     <td><?= e($entry['book_name']) ?><?php if ($entry['to_book_name']): ?><small>→ <?= e($entry['to_book_name']) ?></small><?php endif ?></td>
     <td><?= status_badge($entry['kind']) ?></td>
-    <td class="number amount <?= $entry['kind']==='income' ? 'positive' : ($entry['kind']==='expense' ? 'negative' : '') ?>"><?= $entry['kind']==='income' ? '+' : ($entry['kind']==='expense' ? '−' : '') ?><?= number_format((int)$entry['amount']) ?><span class="mobile-only entry-status"><?= status_badge($entry['kind']) ?></span></td>
+    <td class="number amount <?= $entry['kind']==='income' ? 'positive' : ($entry['kind']==='expense' ? 'negative' : '') ?>"><?= $entry['kind']==='income' ? '+' : ($entry['kind']==='expense' ? '−' : '') ?><?= \App\Services\Money::format($entry['amount']) ?><span class="mobile-only entry-status"><?= status_badge($entry['kind']) ?></span></td>
     <td class="actions-col">
         <?php if ($entry['debt_id']): ?>
         <a class="text-button row-view" href="<?= url('debts/'.$entry['debt_id']) ?>" aria-label="<?= e(t('View balance')) ?>" title="<?= e(t('View balance')) ?>"><span class="row-action-icon"><?= icon('chevron') ?></span><span class="row-action-label"><?= e(t('View balance')) ?></span></a>

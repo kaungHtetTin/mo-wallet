@@ -7,7 +7,7 @@ use Mini\Database as DB;
 
 final class Finance
 {
-    public const MAX_AMOUNT = 999999999999;
+    public const MAX_AMOUNT = '999999999999.99';
     public const ENTITIES = ['businesses', 'books', 'categories', 'people'];
 
     public static function fail(string $field, string $message): never
@@ -25,13 +25,13 @@ final class Finance
         return $value === '' ? null : $value;
     }
 
-    public static function amount(array $data, string $key = 'amount', bool $zero = false): int
+    public static function amount(array $data, string $key = 'amount', bool $zero = false): string
     {
         $value = $data[$key] ?? '';
-        if (!is_scalar($value) || !preg_match('/^\d{1,12}$/D', (string) $value) || (int) $value > self::MAX_AMOUNT || (int) $value < ($zero ? 0 : 1)) {
-            self::fail($key, $zero ? 'Enter a whole MMK amount of zero or more (up to 999,999,999,999).' : 'Enter a positive whole MMK amount (up to 999,999,999,999).');
+        if ((!is_string($value) && !is_int($value)) || !preg_match('/^\d{1,12}(?:\.\d{1,2})?$/D', (string) $value) || Money::compare($value, self::MAX_AMOUNT) > 0 || Money::compare($value, '0') < ($zero ? 0 : 1)) {
+            self::fail($key, $zero ? 'Enter an MMK amount of zero or more with up to 2 decimal places (up to 999,999,999,999.99).' : 'Enter a positive MMK amount with up to 2 decimal places (up to 999,999,999,999.99).');
         }
-        return (int) $value;
+        return Money::add($value, '0');
     }
 
     public static function date(array $data, string $key, bool $required = true): ?string
@@ -139,12 +139,12 @@ final class Finance
             if (!$id) return DB::insert('debts', $row);
             $existing = DB::fetch('SELECT * FROM debts WHERE id = ? FOR UPDATE', [$id]);
             if (!$existing) self::fail('form', 'Record not found.');
-            $paid = (int) DB::fetchValue('SELECT COALESCE(SUM(amount),0) FROM transactions WHERE debt_id = ?', [$id]);
-            if ($paid) {
+            $paid = DB::fetchValue('SELECT COALESCE(SUM(amount),0) FROM transactions WHERE debt_id = ?', [$id]);
+            if (Money::compare($paid, '0') > 0) {
                 foreach (['direction', 'business_id', 'person_id', 'category_id'] as $key) {
                     if ((string) $row[$key] !== (string) $existing[$key]) self::fail($key, 'Undo existing payments before changing this field.');
                 }
-                if ($row['amount'] < $paid) self::fail('amount', 'Amount cannot be less than payments already recorded.');
+                if (Money::compare($row['amount'], $paid) < 0) self::fail('amount', 'Amount cannot be less than payments already recorded.');
                 $first = DB::fetchValue('SELECT MIN(record_date) FROM transactions WHERE debt_id = ?', [$id]);
                 if ($row['record_date'] > $first) self::fail('record_date', 'Record date cannot be after an existing payment.');
             }
@@ -162,8 +162,8 @@ final class Finance
         return DB::transaction(function () use ($id, $amount, $book, $date, $notes) {
             $debt = DB::fetch('SELECT * FROM debts WHERE id = ? FOR UPDATE', [$id]);
             if (!$debt) self::fail('form', 'Record not found.');
-            $paid = (int) DB::fetchValue('SELECT COALESCE(SUM(amount),0) FROM transactions WHERE debt_id = ?', [$id]);
-            if ($amount > (int) $debt['amount'] - $paid) self::fail('amount', 'Payment exceeds the outstanding balance.');
+            $paid = DB::fetchValue('SELECT COALESCE(SUM(amount),0) FROM transactions WHERE debt_id = ?', [$id]);
+            if (Money::compare($amount, Money::subtract($debt['amount'], $paid)) > 0) self::fail('amount', 'Payment exceeds the outstanding balance.');
             if ($date < $debt['record_date']) self::fail('record_date', 'Payment date must be on or after the record date.');
             return DB::insert('transactions', [
                 'debt_id' => $id, 'kind' => $debt['direction'] === 'receivable' ? 'income' : 'expense',
@@ -236,7 +236,7 @@ final class Finance
         [$where, $args] = self::where($filters);
         $join = ' FROM transactions t LEFT JOIN people p ON p.id = t.person_id';
         $totals = DB::fetch("SELECT COALESCE(SUM(CASE WHEN t.kind='income' THEN t.amount ELSE 0 END),0) income, COALESCE(SUM(CASE WHEN t.kind='expense' THEN t.amount ELSE 0 END),0) expense, COUNT(*) count" . $join . ' WHERE ' . $where, $args);
-        $totals['net'] = (int) $totals['income'] - (int) $totals['expense'];
+        $totals['net'] = Money::subtract($totals['income'], $totals['expense']);
         $months = DB::fetchAll("SELECT DATE_FORMAT(t.record_date,'%Y-%m') month, SUM(CASE WHEN t.kind='income' THEN t.amount ELSE 0 END) income, SUM(CASE WHEN t.kind='expense' THEN t.amount ELSE 0 END) expense" . $join . ' WHERE ' . $where . ' GROUP BY month ORDER BY month', $args);
         $categories = DB::fetchAll("SELECT c.name, t.kind, SUM(t.amount) amount" . $join . " JOIN categories c ON c.id=t.category_id WHERE $where AND t.kind <> 'transfer' GROUP BY c.id,c.name,t.kind ORDER BY amount DESC", $args);
         $businesses = DB::fetchAll("SELECT b.name, b.kind, SUM(CASE WHEN t.kind='income' THEN t.amount ELSE 0 END) income, SUM(CASE WHEN t.kind='expense' THEN t.amount ELSE 0 END) expense" . $join . " JOIN businesses b ON b.id=t.business_id WHERE $where GROUP BY b.id,b.name,b.kind ORDER BY income DESC", $args);

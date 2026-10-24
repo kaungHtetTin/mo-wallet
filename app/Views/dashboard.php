@@ -1,7 +1,7 @@
 <div class="page-heading"><div><h1><?= e(t('Overview')) ?></h1><p><?= e(t('Income, expenses, and balances across your books.')) ?></p></div><a class="button primary" href="<?= url('transactions/new') ?>"><?= icon('plus') ?><?= e(t('New transaction')) ?></a></div>
 <section class="panel filters-panel"><?php $simple=true; require BASE_PATH.'/app/Views/partials/filters.php'; ?></section>
 <section class="metrics" aria-label="<?= e(t('Financial summary')) ?>">
-    <?php foreach ([['Income',$report['totals']['income'],'arrow-down','success','In selected period'],['Expenses',$report['totals']['expense'],'arrow-up','danger','In selected period'],['Net income',$report['totals']['net'],'reports','brand','Income minus expenses'],['Total book balance',array_sum(array_column($balances,'balance')),'books','neutral','All books · as of today']] as [$label,$value,$glyph,$tone,$hint]): ?>
+    <?php foreach ([['Income',$report['totals']['income'],'arrow-down','success','In selected period'],['Expenses',$report['totals']['expense'],'arrow-up','danger','In selected period'],['Net income',$report['totals']['net'],'reports','brand','Income minus expenses'],['Total book balance',\App\Services\Money::sum(array_column($balances,'balance')),'books','neutral','All books · as of today']] as [$label,$value,$glyph,$tone,$hint]): ?>
     <div class="metric <?= $tone ?>"><div><span class="metric-label"><?= e(t($label)) ?></span><strong><?= e(money($value)) ?></strong><small><?= e(t($hint)) ?></small></div><span class="metric-icon <?= $tone ?>"><?= icon($glyph) ?></span></div>
     <?php endforeach ?>
 </section>

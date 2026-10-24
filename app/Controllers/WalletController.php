@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Services\Finance as F;
+use App\Services\Money;
 use App\ValidationException;
 use Mini\Database as DB;
 
@@ -23,7 +24,7 @@ final class WalletController
         $books = F::books();
         $debts = F::debts(['status' => 'open', 'business_id' => $filters['business_id']]);
         $receivable = $payable = 0;
-        foreach ($debts as $debt) { if ($debt['direction'] === 'receivable') $receivable += (int) $debt['remaining']; else $payable += (int) $debt['remaining']; }
+        foreach ($debts as $debt) { if ($debt['direction'] === 'receivable') $receivable = Money::add($receivable, $debt['remaining']); else $payable = Money::add($payable, $debt['remaining']); }
         $recent = F::transactions($filters, 1, 8)['rows'];
         view('dashboard', array_merge(compact('filters','report','books','debts','receivable','payable','recent'), F::options(), ['balances' => $books, 'title' => 'Overview']));
     }
@@ -64,7 +65,7 @@ final class WalletController
         if ($entity === 'people') {
             $summary = [];
             foreach (F::debts() as $debt) {
-                $summary[$debt['person_id']][$debt['direction']] = ($summary[$debt['person_id']][$debt['direction']] ?? 0) + (int) $debt['remaining'];
+                $summary[$debt['person_id']][$debt['direction']] = Money::add($summary[$debt['person_id']][$debt['direction']] ?? 0, $debt['remaining']);
             }
         }
         view('manage', ['title' => ucfirst($entity), 'entity' => $entity, 'rows' => $rows, 'summary' => $summary ?? []]);
@@ -104,7 +105,7 @@ final class WalletController
         $rows = F::debts($filters);
         $totalRows = count($rows); $pages = max(1,(int) ceil($totalRows/25)); $page = max(1,min((int) query('page','1'),$pages));
         $totals = ['receivable' => 0, 'payable' => 0];
-        foreach ($rows as $row) $totals[$row['direction']] += (int) $row['remaining'];
+        foreach ($rows as $row) $totals[$row['direction']] = Money::add($totals[$row['direction']], $row['remaining']);
         $rows = array_slice($rows, ($page-1)*25,25);
         view('debts', array_merge(F::options(), compact('filters','rows','totals','totalRows','pages','page'), ['title' => 'Payables & receivables']));
     }

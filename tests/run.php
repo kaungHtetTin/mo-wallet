@@ -49,9 +49,14 @@ try {
     $admin->exec("CREATE DATABASE `$testDatabase` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     $migrationFiles=glob(BASE_PATH.'/migrations/*.php'); sort($migrationFiles);
     foreach ($migrationFiles as $migrationFile) {
+        if (basename($migrationFile) === '2026_10_24_000003_decimal_amounts.php') {
+            $legacyBook = DB::insert('books', ['name' => 'Legacy migration check', 'opening_balance' => '123456789012']);
+        }
         $migration=require $migrationFile;
         foreach ($migration['up'] as $sql) DB::connection()->exec($sql);
     }
+    check(DB::fetchValue('SELECT opening_balance FROM books WHERE id = ?', [$legacyBook]) === '123456789012.00', 'Decimal migration preserves existing whole amounts');
+    DB::statement('DELETE FROM books WHERE id = ?', [$legacyBook]);
     $business=F::saveEntity('businesses',['name'=>'Design Studio','kind'=>'business']);
     $business2=F::saveEntity('businesses',['name'=>'Neighborhood Store','kind'=>'business']);
     $bank=F::saveEntity('books',['name'=>'Bank','opening_balance'=>'1000000']);
@@ -69,12 +74,12 @@ try {
     $transferId=F::saveTransaction($transfer);
     $all=['from'=>'1900-01-01','to'=>'9999-12-31'];
     $report=F::report($all);
-    check((int)$report['totals']['income']===300000 && (int)$report['totals']['expense']===50000 && $report['totals']['net']===250000,'Transfers and opening balances excluded from report');
+    check((int)$report['totals']['income']===300000 && (int)$report['totals']['expense']===50000 && $report['totals']['net']==='250000.00','Transfers and opening balances excluded from report');
     $books=array_column(F::books(),'balance','id');
     check((int)$books[$cash]===400000 && (int)$books[$bank]===850000,'Transfer updates both books');
-    check(array_sum($books)===1250000,'Transfer conserves total book balances');
+    check(\App\Services\Money::sum($books)==='1250000.00','Transfer conserves total book balances');
     invalid(fn()=>F::saveTransaction(array_merge($transfer,['to_book_id'=>$bank])),'Reject same-book transfer');
-    foreach (['0','-1','1.50','1e5','1000000000000',[]] as $value) invalid(fn()=>F::saveTransaction(array_merge($income,['amount'=>$value])),'Reject invalid MMK amount');
+    foreach (['0','-1','1.501','1e5','1000000000000',[]] as $value) invalid(fn()=>F::saveTransaction(array_merge($income,['amount'=>$value])),'Reject invalid MMK amount');
     invalid(fn()=>F::saveTransaction(array_merge($income,['category_id'=>$rent])),'Reject mismatched category');
     invalid(fn()=>F::saveTransaction(array_merge($income,['record_date'=>'2026-02-30'])),'Reject invalid calendar date');
     invalid(fn()=>F::saveTransaction(array_merge($income,['book_id'=>999999])),'Reject missing book');
@@ -125,6 +130,7 @@ try {
     check(request('setup')['status']===302,'Setup closes after first owner');
     require __DIR__ . '/contacts.php';
     require __DIR__ . '/branding.php';
+    require __DIR__ . '/decimals.php';
     check(request('transactions/new',[])['status']===419,'Financial writes enforce CSRF');
     foreach(['','transactions','transactions/new','debts','debts/new',"debts/$debtId",'reports','manage/books','manage/businesses','manage/categories','manage/people','settings'] as $path){
         $response=request($path); check($response['status']===200 && !preg_match('/(?:Warning:|Fatal error|Application error)/',$response['body']),'Page renders: '.$path);
@@ -142,7 +148,7 @@ try {
     $form=request('transactions/new');
     request('transactions/new',array_merge(tokens($form['body']),$income,['amount'=>'-5']));
     $errorPage=request('transactions/new');
-    check(str_contains($errorPage['body'],'Enter a positive whole MMK amount'),'Validation message shown');
+    check(str_contains($errorPage['body'],'Enter a positive MMK amount with up to 2 decimal places'),'Validation message shown');
     check(str_contains($errorPage['body'],'value="-5"'),'Invalid input retained for correction');
     $csrf=tokens(request('settings')['body'])['_token'];
     request('locale',['_token'=>$csrf,'locale'=>'my','return'=>'reports']);

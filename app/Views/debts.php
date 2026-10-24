@@ -11,8 +11,8 @@
     <?php foreach ($rows as $row): ?>
     <tr>
         <td><a class="identity-link" href="<?= url('debts/'.$row['id']) ?>"><strong><?= e($row['person_name']) ?></strong></a><small><?= e($row['business_name']) ?></small><span class="mobile-only entry-meta"><?= e(t(ucfirst($row['direction']))) ?><?= $row['due_date'] ? ' · '.e($row['due_date']) : '' ?></span></td>
-        <td><?= status_badge($row['direction']) ?></td><td><?= e($row['due_date']?:'—') ?></td><td class="number"><?= number_format((int)$row['amount']) ?></td><td class="number"><?= number_format((int)$row['paid']) ?></td>
-        <td class="number amount"><?= number_format((int)$row['remaining']) ?><span class="mobile-only entry-status"><?= status_badge(debt_status($row)) ?></span></td>
+        <td><?= status_badge($row['direction']) ?></td><td><?= e($row['due_date']?:'—') ?></td><td class="number"><?= \App\Services\Money::format($row['amount']) ?></td><td class="number"><?= \App\Services\Money::format($row['paid']) ?></td>
+        <td class="number amount"><?= \App\Services\Money::format($row['remaining']) ?><span class="mobile-only entry-status"><?= status_badge(debt_status($row)) ?></span></td>
         <td><?= status_badge(debt_status($row)) ?></td>
         <td class="actions-col"><a class="text-button row-view" href="<?= url('debts/'.$row['id']) ?>" aria-label="<?= e(t('View / pay')) ?>" title="<?= e(t('View / pay')) ?>"><span class="row-action-icon"><?= icon('chevron') ?></span><span class="row-action-label"><?= e(t('View / pay')) ?> →</span></a></td>
     </tr>
