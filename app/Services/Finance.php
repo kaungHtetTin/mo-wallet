@@ -7,7 +7,7 @@ use Mini\Database as DB;
 
 final class Finance
 {
-    public const MAX_AMOUNT = '999999999999.99';
+    public const MAX_AMOUNT = '999999999999.999';
     public const ENTITIES = ['businesses', 'books', 'categories', 'people'];
 
     public static function fail(string $field, string $message): never
@@ -28,8 +28,8 @@ final class Finance
     public static function amount(array $data, string $key = 'amount', bool $zero = false): string
     {
         $value = $data[$key] ?? '';
-        if ((!is_string($value) && !is_int($value)) || !preg_match('/^\d{1,12}(?:\.\d{1,2})?$/D', (string) $value) || Money::compare($value, self::MAX_AMOUNT) > 0 || Money::compare($value, '0') < ($zero ? 0 : 1)) {
-            self::fail($key, $zero ? 'Enter an MMK amount of zero or more with up to 2 decimal places (up to 999,999,999,999.99).' : 'Enter a positive MMK amount with up to 2 decimal places (up to 999,999,999,999.99).');
+        if ((!is_string($value) && !is_int($value)) || !preg_match('/^\d{1,12}(?:\.\d{1,3})?$/D', (string) $value) || Money::compare($value, self::MAX_AMOUNT) > 0 || Money::compare($value, '0') < ($zero ? 0 : 1)) {
+            self::fail($key, $zero ? 'Enter an MMK amount of zero or more with up to 3 decimal places (up to 999,999,999,999.999).' : 'Enter a positive MMK amount with up to 3 decimal places (up to 999,999,999,999.999).');
         }
         return Money::add($value, '0');
     }

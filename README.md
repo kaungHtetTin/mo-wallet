@@ -28,7 +28,7 @@ Then open http://localhost:8000. The local database has already been migrated in
 1. Add each business under **Businesses & personal**. A **Personal** record is included to start.
 2. Create **Account books** for cash, bank accounts, or mobile wallets. A **Cash** book is included. Enter each book's balance before the first recorded transaction as its opening balance. Books can hold transactions from multiple businesses; business attribution belongs to each income/expense record.
 3. Adjust the shared **Categories**. A category can be income, expense, or both. Names and notes can be entered in English or Myanmar. User-entered names are kept exactly as entered when the interface language changes.
-4. Add **Transactions** for received income and paid expenses. Amounts are positive MMK values with up to two decimal places, up to 999,999,999,999.99 per record. Expenses reduce the selected book. Transfers move money between two books and preserve their combined balance.
+4. Add **Transactions** for received income and paid expenses. Amounts are positive MMK values with up to three decimal places, up to 999,999,999,999.999 per record. Expenses reduce the selected book. Transfers move money between two books and preserve their combined balance.
 5. Add **People**, then record **Payables & receivables** for unpaid sales, bills, and other amounts due. Choose the business/personal record and the income/expense category that will apply when paid.
 6. Open a balance and record a partial or full payment. This creates its cash transaction automatically. Do not separately enter the same payment in Transactions. **Undo payment** removes the cash entry and reopens that amount. A payment cannot exceed the unpaid balance.
 7. Review the dashboard and **Reports & analysis** using date, business, book, category, and type filters. Transactions also support notes/person search and pagination. CSV export follows the selected filters, includes a UTF-8 BOM for Myanmar text, and neutralizes spreadsheet formulas in text fields.
@@ -45,7 +45,7 @@ Preview drafts contain only parsed names/numbers, are kept in your authenticated
 
 ## How amounts are calculated
 
-Amounts are stored in MySQL `DECIMAL(21,2)` columns and calculated with PHP BCMath decimal strings so fractions remain exact. Forms reject more than two decimal places instead of silently rounding them. All monetary displays and CSV amounts include two decimal places. Run `php bin/console migrate` when updating an existing installation; existing whole amounts are preserved as `.00`. Rolling back the decimal migration retains these columns to prevent losing fractional values.
+Amounts are stored in MySQL `DECIMAL(22,3)` columns and calculated with PHP BCMath decimal strings so fractions remain exact. Forms reject more than three decimal places instead of silently rounding them. All monetary displays and CSV amounts include three decimal places. Run `php bin/console migrate` when updating an existing installation; existing whole amounts are preserved as `.000`. Rolling back the decimal migration retains these columns to prevent losing fractional values.
 
 - This is a **cash basis record app**: unpaid balances do not count as income or expenses until their payments are recorded. It does not implement invoices, inventory valuation, accrual accounting, tax reporting, loan amortization, or a double-entry general ledger.
 - Every balance payment becomes income for a receivable or an expense for a payable. There is no separate loan-principal classification in this version.
